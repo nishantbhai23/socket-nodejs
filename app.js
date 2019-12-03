@@ -37,7 +37,19 @@ io.sockets.on('connection', function(socket){
                 case streams.depthLevel('BTCUSDT', 10):
                     console.log('wpa', streamEvent.data);
                     streamEvent.data.bids = filterResults(streamEvent.data.bids);
-                    streamEvent.data.asks = filterResults(streamEvent.data.asks);
+                    let askResults = filterResults(streamEvent.data.asks);
+                    askResults.sort((firstElement,nextElement) => {
+                        if(firstElement.price < nextElement.price){
+                            return 1;
+                        }
+                        else if(firstElement.price > nextElement.price){
+                            return -1;
+                        }
+                        else{
+                            return 0;
+                        }
+                    });
+                    streamEvent.data.asks = askResults;
                     console.log('Depth event, update order book\n', streamEvent.data);
                     socket.emit('stream', {...streamEvent.data, 'eventType': 'depthLevelUpdate'})
                     break;
