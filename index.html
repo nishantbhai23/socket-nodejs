@@ -12,7 +12,11 @@
         </div>
     </div>
     <order-list :depthdelta="askDepthDelta" depthclass="askDepth"> </order-list>
-    <div style="padding:20px" :class="{bidDepth : spotCurrentPrice > spotOldPrice, askDepth: spotCurrentPrice < spotOldPrice}"> <span style="font-weight: 600;font-size:16px;">{{spotCurrentPrice}} </span> <span style="margin-left:20px;font-weight:400;font-size:15px;"> {{spotOldPrice}}</span></div>
+    <div style="padding:20px;background: rgb(247, 247, 247);" >
+        <span  :class="{bidDepth : spotCurrentPrice > spotOldPrice, askDepth: spotCurrentPrice < spotOldPrice}" style="font-weight: 600;font-size:16px">{{spotCurrentPrice}} </span>
+        <img v-if="spotOldPrice && spotOldPrice !== spotCurrentPrice" src="up-arrow.svg" style="height: 13px" :class="{reverse: spotCurrentPrice < spotOldPrice }">
+        <span v-if="spotOldPrice" style="margin-left:20px;font-weight:400;font-size:15px;"> ${{spotOldPrice}}</span>
+    </div>
     <order-list :depthdelta="bidDepthDelta" depthclass="bidDepth"> </order-list>
   </div>
   <script>
@@ -78,6 +82,9 @@
     }
     .row-heading{
         color: #999;
+    }
+    .reverse{
+        transform: rotate(180deg);
     }
     .askDepth{
         color: rgb(234, 0, 112);
