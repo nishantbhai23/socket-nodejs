@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.2/socket.io.js"></script>
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  </head>
+  <div id="app">
+    <div style="display:flex">
+        <div v-for="(eachHeading,index) in rowHeadings" :key="index" style="flex:1;" class="row-heading">
+            <span>{{eachHeading.title}} </span>
+            <span> {{eachHeading.sub}}</span>
+        </div>
+    </div>
+    <order-list :depthdelta="bidDepthDelta" depthclass="bidDepth"> </order-list>
+    <div style="padding:20px" :class="{askDepth : spotCurrentPrice > spotOldPrice, bidDepth: spotCurrentPrice < spotOldPrice}"> <span style="font-weight: 600">{{spotCurrentPrice}} </span> <span style="margin-left:20px;font-weight:400"> {{spotOldPrice}}</span></div>
+    <order-list :depthdelta="askDepthDelta" depthclass="askDepth"> </order-list>
+  </div>
+  <script>
+    Vue.component('order-list',{
+    props: ["depthdelta","depthclass"],
+    template: `
+    <div>
+    <div style="display:flex;flex-direction:column" v-for="(depthData,index) in depthdelta" :key="index">
+        <div style="display:flex" >
+                <span style="flex:1" :class="depthclass">{{depthData.price}}</span>
+                <span style="flex:1">{{depthData.quantity}}</span>
+                <span style="flex:1">{{depthData.total}}</span>           
+        </div>
+    </div>
+    </div>
+    `
+    });
+    var app = new Vue({
+        el: "#app",
+        data: {
+            name: 'hello',
+            symbolType: 'BTC',
+            symbolCurr: 'USDT',
+            rowHeadings: [],
+            depthLength: 10,
+            bidDepthDelta: [],
+            askDepthDelta: [],
+            spotCurrentPrice: '',
+            spotOldPrice: ''
+        },
+        methods : {
+            populateListData(newArr,currArr){
+                let arrToReturn = [];
+                if(newArr.length >= 10){
+                    arrToReturn = newArr.slice(0,10);
+                }
+                else {
+                    arrToReturn = [...newArr,...currArr];
+                    arrToReturn.sort();
+                    arrToReturn = arrToReturn.slice(0,10);
+                }
+                return arrToReturn;
+            }
+        },
+        mounted(){
+            var socket = io.connect('http://127.0.0.1:8000', {transports: ['websocket']});
+            socket.on('stream', (data) => {
+                switch(data.eventType){
+                    case '24hrTicker':
+                        this.spotCurrentPrice = data.currentClose;
+                        this.spotOldPrice = data.previousClose;
+                    break;
+                    case 'depthLevelUpdate':
+                        this.bidDepthDelta = data.bids;
+                        this.askDepthDelta = data.asks;
+                        // this.bidDepthDelta = this.populateListData(data.bidDepthDelta, [...this.bidDepthDelta]);
+                        // this.askDepthDelta = this.populateListData(data.askDepthDelta, [...this.askDepthDelta]);
+                    break;
+                }
+            });
+            this.rowHeadings = [{
+                title: 'Price',
+                sub: '( ' + this.symbolCurr + ' )'
+            },
+            {
+                title: 'Amount',
+                sub: '( ' + this.symbolType + ' )'
+            },
+            {
+                title: 'Total',
+                sub: '( ' + this.symbolCurr + ' )'
+            }];
+        }
+    })
+    // var listComponent = {
+    // props: ["depthDelta"],
+    // data: {
+
+    // },
+    // template: `
+    // <div style="display:flex;flex-direction:column" v-for="(depthData,index) in depthDelta" :key="index">
+    //     <div style="display:flex" >
+    //             <span style="flex:1">{{depthData.price}}</span>
+    //             <span style="flex:1">{{depthData.quantity}}</span>
+    //             <span style="flex:1">{{depthData.total}}</span>           
+    //     </div>
+    // </div>
+    // `
+    // };
+  </script>
+  <style>
+    body{
+        font-size: 14px;
+    }
+    .row-heading{
+        color: #999;
+    }
+    .bidDepth{
+        color: rgb(234, 0, 112);
+    }
+    .askDepth{
+        color: rgb(112, 168, 0);
+    }
+  </style>
+</html>
