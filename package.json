@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "binance": "^1.3.3",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.5.0",
     "ws": "^7.2.0"
   }
 }
